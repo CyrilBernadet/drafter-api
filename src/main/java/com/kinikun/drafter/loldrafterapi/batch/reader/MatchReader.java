@@ -12,19 +12,23 @@ import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
+import io.github.cdimascio.dotenv.Dotenv;
+
 public class MatchReader implements ItemReader<MatchDto> {
 
-    private final static String API_KEY = "RGAPI-aa6ec1df-eaf6-4852-b2ce-37a6293127f2";
-    private final static String API_URL = "https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/";
     private final static String ENCRYPTED_ACCOUNT_ID = "RTnb5fk3udlHF-VBNQ_g61CWvy0bAbxJYnfO1Rz9A9qI8NQ";
 
     @Override
     public MatchDto read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-        URL url = new URL(API_URL + ENCRYPTED_ACCOUNT_ID);
+        Dotenv dotenv = Dotenv.load();
+        String apiKey =  dotenv.get("API_KEY");
+        String apiURL =  dotenv.get("API_URL");
+
+        URL url = new URL(apiURL + ENCRYPTED_ACCOUNT_ID);
 
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("GET");
-        con.setRequestProperty("X-Riot-Token", API_KEY);
+        con.setRequestProperty("X-Riot-Token", apiKey);
 
         BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         String inputLine;

@@ -56,7 +56,7 @@ public class BatchConfiguration {
         return new JobCompletionListener();
     }
 
-    @Scheduled(cron = "*/10 * * * * ?")
+    @Scheduled(cron = "0 0 0 ? * *")
     public void launchMatchBatch() throws JobExecutionAlreadyRunningException, JobRestartException,
             JobInstanceAlreadyCompleteException, JobParametersInvalidException {
         JobParameters jobParameters = new JobParametersBuilder().addLong("time", System.currentTimeMillis())
