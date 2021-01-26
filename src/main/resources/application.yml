@@ -1,0 +1,17 @@
+api:
+  key: ${env.API_KEY}
+  url: ${env.API_URL}
+spring:
+  batch:
+    initialize-schema: always
+  jpa:
+    database: POSTGRESQL
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+  datasource:
+    platform: ${env.DATABASE_PLATFORM}
+    url: ${env.DATABASE_URL}
+    username: ${env.DATABASE_USERNAME}
+    password: ${env.DATABASE_PASSWORD}
+    driverClassName: org.postgresql.Driver

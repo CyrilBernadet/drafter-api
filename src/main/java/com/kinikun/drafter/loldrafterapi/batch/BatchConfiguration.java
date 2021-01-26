@@ -19,6 +19,7 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,13 +48,19 @@ public class BatchConfiguration {
 
     @Bean
     public Step orderStep1() {
-        return stepBuilderFactory.get("orderStep1").<MatchDto, MatchDto>chunk(1).reader(new MatchReader())
+        return stepBuilderFactory.get("orderStep1").<MatchDto, MatchDto>chunk(1).reader(itemReader())
                 .processor(new MatchProcessor()).writer(new MatchWriter()).build();
     }
 
     @Bean
     public JobExecutionListener listener() {
         return new JobCompletionListener();
+    }
+    
+ 
+    @Bean
+    public ItemReader<MatchDto> itemReader() {
+        return new MatchReader();
     }
 
     @Scheduled(cron = "0 0 0 ? * *")
