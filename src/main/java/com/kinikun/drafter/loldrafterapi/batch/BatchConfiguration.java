@@ -1,19 +1,24 @@
 package com.kinikun.drafter.loldrafterapi.batch;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.kinikun.drafter.loldrafterapi.batch.listener.JobCompletionListener;
 import com.kinikun.drafter.loldrafterapi.batch.processor.MatchProcessor;
-import com.kinikun.drafter.loldrafterapi.batch.reader.MatchReader;
 import com.kinikun.drafter.loldrafterapi.batch.writer.MatchWriter;
 import com.kinikun.drafter.loldrafterapi.dto.MatchDto;
+import com.kinikun.drafter.loldrafterapi.entity.PlayerEntity;
+import com.kinikun.drafter.loldrafterapi.repository.PlayerRepository;
 
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.SessionFactoryBuilder;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -22,36 +27,43 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.data.RepositoryItemReader;
+import org.springframework.batch.item.database.HibernateCursorItemReader;
+import org.springframework.batch.item.database.builder.HibernateCursorItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Configuration
+@EnableBatchProcessing
+@EnableScheduling
 public class BatchConfiguration {
 
     @Autowired
-    public JobBuilderFactory jobBuilderFactory;
+    private JobBuilderFactory jobBuilderFactory;
 
     @Autowired
-    public StepBuilderFactory stepBuilderFactory;
+    private StepBuilderFactory stepBuilderFactory;
 
     @Autowired
-    JobLauncher jobLauncher;
+    private JobLauncher jobLauncher;
 
     @Autowired
-    Job processJob;
+    private Job processJob;
 
     @Bean
-    public Job processJob() {
+    public Job processJob(PlayerRepository playerRepository) {
         return jobBuilderFactory.get("processJob").incrementer(new RunIdIncrementer()).listener(listener())
-                .flow(orderStep1()).end().build();
+                .flow(orderStep1(playerRepository)).end().build();
     }
 
     @Bean
-    public Step orderStep1() {
-        return stepBuilderFactory.get("orderStep1").<List<String>, MatchDto>chunk(1).reader(itemReader())
-                .processor(new MatchProcessor()).writer(new MatchWriter()).build();
+    public Step orderStep1(PlayerRepository playerRepository) {
+        return stepBuilderFactory.get("orderStep1").<PlayerEntity, MatchDto>chunk(1)
+                .reader(itemReader(playerRepository)).processor(new MatchProcessor()).writer(new MatchWriter()).build();
     }
 
     @Bean
@@ -60,11 +72,19 @@ public class BatchConfiguration {
     }
 
     @Bean
-    public ItemReader<List<String>> itemReader() {
-        return new MatchReader();
+    public ItemReader<PlayerEntity> itemReader(PlayerRepository playerRepository) {
+        Map<String, Direction> sorts = new HashMap<>();
+        sorts.put("id", Direction.ASC);
+
+        RepositoryItemReader<PlayerEntity> reader = new RepositoryItemReader<>();
+        reader.setRepository(playerRepository);
+        reader.setMethodName("findAll");
+        reader.setSort(sorts);
+        
+        return reader;
     }
 
-    @Scheduled(cron = "0 0 0 ? * *")
+    @Scheduled(cron = "0 0 0 1/1 * ?")
     public void launchMatchBatch() throws JobExecutionAlreadyRunningException, JobRestartException,
             JobInstanceAlreadyCompleteException, JobParametersInvalidException {
         JobParameters jobParameters = new JobParametersBuilder().addLong("time", System.currentTimeMillis())
