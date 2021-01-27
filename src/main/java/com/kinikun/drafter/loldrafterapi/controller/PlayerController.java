@@ -3,8 +3,8 @@ package com.kinikun.drafter.loldrafterapi.controller;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.kinikun.drafter.loldrafterapi.batch.entity.PlayerEntity;
-import com.kinikun.drafter.loldrafterapi.batch.repository.PlayerRepository;
+import com.kinikun.drafter.loldrafterapi.entity.PlayerEntity;
+import com.kinikun.drafter.loldrafterapi.repository.PlayerRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

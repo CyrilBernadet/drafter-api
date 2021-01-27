@@ -1,5 +1,7 @@
 package com.kinikun.drafter.loldrafterapi.batch;
 
+import java.util.List;
+
 import com.kinikun.drafter.loldrafterapi.batch.listener.JobCompletionListener;
 import com.kinikun.drafter.loldrafterapi.batch.processor.MatchProcessor;
 import com.kinikun.drafter.loldrafterapi.batch.reader.MatchReader;
@@ -48,7 +50,7 @@ public class BatchConfiguration {
 
     @Bean
     public Step orderStep1() {
-        return stepBuilderFactory.get("orderStep1").<MatchDto, MatchDto>chunk(1).reader(itemReader())
+        return stepBuilderFactory.get("orderStep1").<List<String>, MatchDto>chunk(1).reader(itemReader())
                 .processor(new MatchProcessor()).writer(new MatchWriter()).build();
     }
 
@@ -56,10 +58,9 @@ public class BatchConfiguration {
     public JobExecutionListener listener() {
         return new JobCompletionListener();
     }
-    
- 
+
     @Bean
-    public ItemReader<MatchDto> itemReader() {
+    public ItemReader<List<String>> itemReader() {
         return new MatchReader();
     }
 

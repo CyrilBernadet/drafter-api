@@ -1,4 +1,4 @@
-package com.kinikun.drafter.loldrafterapi.batch.entity;
+package com.kinikun.drafter.loldrafterapi.entity;
 
 import java.util.UUID;
 

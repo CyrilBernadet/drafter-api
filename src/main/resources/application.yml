@@ -1,6 +1,9 @@
 api:
   key: ${env.API_KEY}
   url: ${env.API_URL}
+elasticsearch:
+  host: ${env.ELASTICSEARCH_HOST}
+  port: ${env.ELASTICSEARCH_PORT}
 spring:
   batch:
     initialize-schema: always
