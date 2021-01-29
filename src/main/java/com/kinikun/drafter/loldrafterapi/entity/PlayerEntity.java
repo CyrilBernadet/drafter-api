@@ -1,5 +1,6 @@
 package com.kinikun.drafter.loldrafterapi.entity;
 
+import java.sql.Timestamp;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -20,11 +21,14 @@ public class PlayerEntity {
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 
+    @Column(nullable = false)
     private String summonerId;
 
+    @Column(nullable = false)
     private String accountId;
 
-    private String role;
+    @Column(nullable = true)
+    private Timestamp lastGameProcessedTime;
 
     public UUID getId() {
         return id;
@@ -50,12 +54,12 @@ public class PlayerEntity {
         this.accountId = accountId;
     }
 
-    public String getRole() {
-        return role;
+    public Timestamp getLastGameProcessedTime() {
+        return lastGameProcessedTime;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setLastGameProcessedTime(Timestamp lastGameProcessedTime) {
+        this.lastGameProcessedTime = lastGameProcessedTime;
     }
 
 }
