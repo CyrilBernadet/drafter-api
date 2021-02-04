@@ -1,6 +1,7 @@
 package com.kinikun.drafter.loldrafterapi.batch;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.kinikun.drafter.loldrafterapi.batch.listener.JobCompletionListener;
@@ -64,8 +65,9 @@ public class BatchConfiguration {
 
     @Bean
     public Step getMatchStep(PlayerRepository playerRepository) {
-        return stepBuilderFactory.get("getMatchStep").<PlayerEntity, MatchDto>chunk(1)
-                .reader(itemReader(playerRepository)).processor(new MatchProcessor(playerRepository)).writer(new MatchWriter()).build();
+        return stepBuilderFactory.get("getMatchStep").<PlayerEntity, List<MatchDto>>chunk(1)
+                .reader(itemReader(playerRepository)).processor(new MatchProcessor(playerRepository))
+                .writer(new MatchWriter()).build();
     }
 
     @Bean
