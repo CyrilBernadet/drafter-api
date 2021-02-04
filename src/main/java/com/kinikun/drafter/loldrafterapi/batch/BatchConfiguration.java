@@ -29,6 +29,7 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.data.RepositoryItemReader;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort.Direction;
@@ -39,6 +40,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 @EnableBatchProcessing
 @EnableScheduling
 public class BatchConfiguration {
+
+    @Value("${api.key}")
+    private String apiKey;
+
+    @Value("${api.url}")
+    private String apiURL;
 
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
@@ -63,7 +70,7 @@ public class BatchConfiguration {
     @Bean
     public Step getMatchStep(PlayerRepository playerRepository) {
         return stepBuilderFactory.get("getMatchStep").<PlayerEntity, List<MatchDto>>chunk(1)
-                .reader(itemReader(playerRepository)).processor(new MatchProcessor(playerRepository))
+                .reader(itemReader(playerRepository)).processor(new MatchProcessor(playerRepository, apiURL, apiKey))
                 .writer(new MatchWriter()).build();
     }
 

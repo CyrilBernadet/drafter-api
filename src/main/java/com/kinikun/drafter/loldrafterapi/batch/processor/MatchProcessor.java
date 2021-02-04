@@ -18,14 +18,20 @@ import org.springframework.batch.item.ItemProcessor;
 
 public class MatchProcessor implements ItemProcessor<PlayerEntity, List<MatchDto>> {
 
-    private final static String API_ENDPOINT = "/lol/match/v4/matches/";
+    private String apiKey;
 
-    private final static String API_MATCH_PLAYER_ENDPOINT = "/lol/match/v4/matchlists/by-account/";
+    private String apiURL;
+
+    private static final String API_ENDPOINT = "/lol/match/v4/matches/";
+
+    private static final String API_MATCH_PLAYER_ENDPOINT = "/lol/match/v4/matchlists/by-account/";
 
     private PlayerRepository playerRepository;
 
-    public MatchProcessor(PlayerRepository playerRepository) {
+    public MatchProcessor(PlayerRepository playerRepository, String apiURL, String apiKey) {
         this.playerRepository = playerRepository;
+        this.apiURL = apiURL;
+        this.apiKey = apiKey;
     }
 
     @Override
@@ -37,7 +43,7 @@ public class MatchProcessor implements ItemProcessor<PlayerEntity, List<MatchDto
         int counter = 0;
 
         for (int i = 0; i < matchIds.size() && counter < 10; i++, counter++) {
-            JSONObject match = new JSONObject(HttpUtils.get(API_ENDPOINT + matchIds.get(i)));
+            JSONObject match = new JSONObject(HttpUtils.get(API_ENDPOINT + matchIds.get(i), apiURL, apiKey));
 
             MatchDto matchDto = new MatchDto();
             matchDto.setGameId(match.getLong("gameId"));
@@ -81,7 +87,7 @@ public class MatchProcessor implements ItemProcessor<PlayerEntity, List<MatchDto
             url.append(player.getLastGameProcessedTime().getTime());
         }
 
-        JSONObject matchs = new JSONObject(HttpUtils.get(url.toString()));
+        JSONObject matchs = new JSONObject(HttpUtils.get(url.toString(), apiURL, apiKey));
         JSONArray matchsArray = matchs.getJSONArray("matches");
         List<String> result = new ArrayList<>();
 
