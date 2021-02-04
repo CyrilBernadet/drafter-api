@@ -41,9 +41,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class BatchConfiguration {
 
     @Autowired
-    private JobBuilderFactory jobBuilderFactory;
-
-    @Autowired
     private StepBuilderFactory stepBuilderFactory;
 
     @Autowired
@@ -53,7 +50,7 @@ public class BatchConfiguration {
     private Job processJob;
 
     @Bean
-    public Job processJob(PlayerRepository playerRepository) {
+    public Job processJob(PlayerRepository playerRepository, @Autowired JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get("processJob").incrementer(new RunIdIncrementer()).listener(listener())
                 .flow(purgeMatchesStep()).next(getMatchStep(playerRepository)).end().build();
     }
