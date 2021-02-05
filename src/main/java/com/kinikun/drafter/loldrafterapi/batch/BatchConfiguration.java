@@ -12,6 +12,7 @@ import com.kinikun.drafter.loldrafterapi.dto.MatchDto;
 import com.kinikun.drafter.loldrafterapi.entity.PlayerEntity;
 import com.kinikun.drafter.loldrafterapi.repository.PlayerRepository;
 
+import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.JobParameters;
@@ -57,9 +58,10 @@ public class BatchConfiguration {
     private Job processJob;
 
     @Bean
-    public Job processJob(PlayerRepository playerRepository, @Autowired JobBuilderFactory jobBuilderFactory) {
+    public Job processJob(PlayerRepository playerRepository, @Autowired JobBuilderFactory jobBuilderFactory,
+            @Autowired RestHighLevelClient esClient) {
         return jobBuilderFactory.get("processJob").incrementer(new RunIdIncrementer()).listener(listener())
-                .flow(purgeMatchesStep()).next(getMatchStep(playerRepository)).end().build();
+                .flow(purgeMatchesStep()).next(getMatchStep(playerRepository, esClient)).end().build();
     }
 
     @Bean
@@ -68,10 +70,10 @@ public class BatchConfiguration {
     }
 
     @Bean
-    public Step getMatchStep(PlayerRepository playerRepository) {
+    public Step getMatchStep(PlayerRepository playerRepository, RestHighLevelClient esClient) {
         return stepBuilderFactory.get("getMatchStep").<PlayerEntity, List<MatchDto>>chunk(1)
                 .reader(itemReader(playerRepository)).processor(new MatchProcessor(playerRepository, apiURL, apiKey))
-                .writer(new MatchWriter()).build();
+                .writer(new MatchWriter(esClient)).build();
     }
 
     @Bean

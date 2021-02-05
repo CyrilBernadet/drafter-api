@@ -8,6 +8,8 @@ public class MatchDto {
 
     private long gameId;
 
+    private long timestamp;
+
     private TeamEnum winningTeam;
 
     private List<String> blueTeamBans;
@@ -24,6 +26,14 @@ public class MatchDto {
 
     public void setGameId(long gameId) {
         this.gameId = gameId;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 
     public TeamEnum getWinningTeam() {
@@ -66,4 +76,5 @@ public class MatchDto {
         this.redTeamPicks = redTeamPicks;
     }
 
+    
 }

@@ -47,6 +47,7 @@ public class MatchProcessor implements ItemProcessor<PlayerEntity, List<MatchDto
 
             MatchDto matchDto = new MatchDto();
             matchDto.setGameId(match.getLong("gameId"));
+            matchDto.setTimestamp(match.getLong("gameCreation"));
 
             JSONArray teams = match.getJSONArray("teams");
 
