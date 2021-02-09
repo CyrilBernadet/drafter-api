@@ -90,6 +90,7 @@ public class BatchConfiguration {
         reader.setRepository(playerRepository);
         reader.setMethodName("findAll");
         reader.setSort(sorts);
+        reader.setMaxItemCount(10);
 
         return reader;
     }

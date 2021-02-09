@@ -15,22 +15,26 @@ public final class HttpUtils {
 
     }
 
-    public static final String get(String endpoint, String apiURL, String apiKey) throws IOException {
-        URL url = new URL(apiURL + endpoint);
+    public static final String get(String endpoint, String apiURL, String apiKey) {
+        try {
+            URL url = new URL(apiURL + endpoint);
 
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.setRequestMethod("GET");
-        con.setRequestProperty("X-Riot-Token", apiKey);
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            con.setRequestProperty("X-Riot-Token", apiKey);
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuilder content = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            content.append(inputLine);
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuilder content = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                content.append(inputLine);
+            }
+            in.close();
+
+            con.disconnect();
+            return content.toString();
+        } catch (IOException e) {
+            return null;
         }
-        in.close();
-
-        con.disconnect();
-        return content.toString();
     }
 }

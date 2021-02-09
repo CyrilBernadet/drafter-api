@@ -43,34 +43,16 @@ public class MatchProcessor implements ItemProcessor<PlayerEntity, List<MatchDto
         int counter = 0;
 
         for (int i = 0; i < matchIds.size() && counter < 10; i++, counter++) {
-            JSONObject match = new JSONObject(HttpUtils.get(API_ENDPOINT + matchIds.get(i), apiURL, apiKey));
+            String stringObject = HttpUtils.get(API_ENDPOINT + matchIds.get(i), apiURL, apiKey);
 
-            MatchDto matchDto = new MatchDto();
-            matchDto.setGameId(match.getLong("gameId"));
-            matchDto.setTimestamp(match.getLong("gameCreation"));
+            if (stringObject != null) {
+                JSONObject match = new JSONObject(stringObject);
+                long matchTimestamp = match.getLong("gameCreation");
 
-            JSONArray teams = match.getJSONArray("teams");
+                matchDtos.add(createMatchDto(match));
 
-            for (int teamIndex = 0; teamIndex < teams.length(); teamIndex++) {
-                JSONObject team = teams.getJSONObject(teamIndex);
-                int teamId = team.getInt("teamId");
-
-                if ("Win".equals(team.get("win"))) {
-                    matchDto.setWinningTeam(TeamEnum.getByCode(teamId));
-                }
-
-                List<String> bansList = this.getBans(team);
-                List<String> picksList = this.getPicks(match.getJSONArray("participants"), teamId);
-
-                if (TeamEnum.BLUE.getTeamCode() == teamId) {
-                    matchDto.setBlueTeamBans(bansList);
-                    matchDto.setBlueTeamPicks(picksList);
-                } else {
-                    matchDto.setRedTeamBans(bansList);
-                    matchDto.setRedTeamPicks(picksList);
-                }
-
-                matchDtos.add(matchDto);
+                // On ajoute les participants qui n'existent pas déjà
+                this.addPlayers(match.getJSONArray("participantIdentities"), matchTimestamp);
             }
         }
 
@@ -88,17 +70,21 @@ public class MatchProcessor implements ItemProcessor<PlayerEntity, List<MatchDto
             url.append(player.getLastGameProcessedTime().getTime());
         }
 
-        JSONObject matchs = new JSONObject(HttpUtils.get(url.toString(), apiURL, apiKey));
-        JSONArray matchsArray = matchs.getJSONArray("matches");
+        String stringObject = HttpUtils.get(url.toString(), apiURL, apiKey);
         List<String> result = new ArrayList<>();
 
-        for (int i = 0; i < matchsArray.length(); i++) {
-            JSONObject match = matchsArray.getJSONObject(i);
-            player.setLastGameProcessedTime(new Timestamp(Long.valueOf(match.get("timestamp").toString())));
-            result.add(match.getString("gameId"));
-        }
+        if (stringObject != null) {
+            JSONObject matchs = new JSONObject(stringObject);
+            JSONArray matchsArray = matchs.getJSONArray("matches");
 
-        playerRepository.save(player);
+            for (int i = 0; i < matchsArray.length(); i++) {
+                JSONObject match = matchsArray.getJSONObject(i);
+                player.setLastGameProcessedTime(new Timestamp(Long.valueOf(match.getString("timestamp"))));
+                result.add(match.getString("gameId"));
+            }
+
+            playerRepository.save(player);
+        }
 
         return result;
     }
@@ -129,5 +115,53 @@ public class MatchProcessor implements ItemProcessor<PlayerEntity, List<MatchDto
         }
 
         return picksList;
+    }
+
+    private void addPlayers(JSONArray participants, long matchTimestamp) throws JSONException {
+
+        for (int participantsIndex = 0; participantsIndex < participants.length(); participantsIndex++) {
+            JSONObject participant = participants.getJSONObject(participantsIndex).getJSONObject("player");
+
+            if (!this.playerRepository.existsBySummonerId(participant.getString("summonerId"))) {
+                PlayerEntity playerEntity = new PlayerEntity();
+                playerEntity.setAccountId(participant.getString("accountId"));
+                playerEntity.setSummonerId(participant.getString("summonerId"));
+                playerEntity.setLastGameProcessedTime(new Timestamp(matchTimestamp));
+
+                playerRepository.save(playerEntity);
+            }
+        }
+    }
+
+    private MatchDto createMatchDto(JSONObject match) throws JSONException {
+        long matchTimestamp = match.getLong("gameCreation");
+
+        MatchDto matchDto = new MatchDto();
+        matchDto.setGameId(match.getLong("gameId"));
+        matchDto.setTimestamp(matchTimestamp);
+
+        JSONArray teams = match.getJSONArray("teams");
+
+        for (int teamIndex = 0; teamIndex < teams.length(); teamIndex++) {
+            JSONObject team = teams.getJSONObject(teamIndex);
+            int teamId = team.getInt("teamId");
+
+            if ("Win".equals(team.get("win"))) {
+                matchDto.setWinningTeam(TeamEnum.getByCode(teamId));
+            }
+
+            List<String> bansList = this.getBans(team);
+            List<String> picksList = this.getPicks(match.getJSONArray("participants"), teamId);
+
+            if (TeamEnum.BLUE.getTeamCode() == teamId) {
+                matchDto.setBlueTeamBans(bansList);
+                matchDto.setBlueTeamPicks(picksList);
+            } else {
+                matchDto.setRedTeamBans(bansList);
+                matchDto.setRedTeamPicks(picksList);
+            }
+        }
+
+        return matchDto;
     }
 }
