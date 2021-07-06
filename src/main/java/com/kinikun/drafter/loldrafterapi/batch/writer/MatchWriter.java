@@ -1,6 +1,7 @@
 package com.kinikun.drafter.loldrafterapi.batch.writer;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,8 @@ import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.CollectionUtils;
 
@@ -33,6 +36,9 @@ public class MatchWriter implements ItemWriter<List<MatchDto>> {
 
     @Override
     public void write(List<? extends List<MatchDto>> items) throws Exception {
+
+        this.purgeMatchs();
+
         // Les matchs arrivent sous forme d'une liste de listes (une liste de match par
         // joueur), il faut donc aplatir cette liste
         List<MatchDto> matchs = items.stream().flatMap(List::stream).collect(Collectors.toList());
@@ -63,10 +69,24 @@ public class MatchWriter implements ItemWriter<List<MatchDto>> {
         }
     }
 
+    private void purgeMatchs() throws IOException {
+        // Suppression de tous les matchs ayant plus d'un mois
+        DeleteByQueryRequest request = new DeleteByQueryRequest(MATCH_INDEX);
+        RangeQueryBuilder queryBuilder = new RangeQueryBuilder("timestamp");
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.MONTH, -1);
+
+        queryBuilder.to(cal.getTimeInMillis());
+        request.setQuery(queryBuilder);
+
+        this.esClient.deleteByQuery(request, RequestOptions.DEFAULT);
+    }
+
     private boolean checkIfMatchAlreadyExists(long gameId) throws IOException {
         GetIndexRequest getIndexRequest = new GetIndexRequest(MATCH_INDEX);
         boolean exists = this.esClient.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
-        
+
         if (!exists) {
             return false;
         }
