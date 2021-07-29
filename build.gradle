@@ -14,9 +14,9 @@ repositories {
 
 dependencies {
 	runtimeOnly 'org.postgresql:postgresql'
-	compile 'org.elasticsearch:elasticsearch:7.10.2'
-	compile group: 'org.elasticsearch.client', name: 'transport', version: '7.10.2'
-    compile 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.10.2'
+	runtimeOnly 'org.elasticsearch:elasticsearch:7.10.2'
+	runtimeOnly group: 'org.elasticsearch.client', name: 'transport', version: '7.10.2'
+    runtimeOnly 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.10.2'
 	implementation 'me.paulschwarz:spring-dotenv:2.3.0'
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
